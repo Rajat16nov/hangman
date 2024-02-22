@@ -1,5 +1,6 @@
-class Game
+require 'yaml'
 
+class Game
   MAX_ATTEMPTS = 8
 
   def initialize
@@ -12,7 +13,6 @@ class Game
     file_data = File.read("./google-10000-english-no-swears.txt").split
     file_data_filtered = file_data.select { |word| word.length > 5 && word.length <= 12 }
     @secret_word = file_data_filtered.sample
-    puts @secret_word
   end
 
   def game_over?
@@ -45,30 +45,33 @@ class Game
     end
   end
 
-
   def play
-  fetch_word_from_file
-  @guess = Array.new(@secret_word.length,"_")
-  display
-  until game_over?
-    letter = ""
-    until is_alpha?(letter)
-      puts "Enter your best guess!"
-      letter = gets.chomp.downcase
-    end
-    @attempts += 1
-    if is_single?(letter)
-      place_letters(letter)
-    else
-      is_correct_word?(letter)
-    end
-    if is_won?
-      puts "Yeah, you guessed it right: #{@secret_word}"
-      break
+    if @secret_word.empty?
+      fetch_word_from_file
+      @guess = Array.new(@secret_word.length, "_")
     end
     display
+    until game_over?
+      puts "Enter your best guess or type 'save' to save the game:"
+      input = gets.chomp.downcase
+      if input == 'save'
+        save_game
+        puts "Game saved!"
+        next
+      end
+      @attempts += 1
+      if is_single?(input)
+        place_letters(input)
+      else
+        is_correct_word?(input)
+      end
+      if is_won?
+        puts "Yeah, you guessed it right: #{@secret_word}"
+        break
+      end
+      display
+    end
   end
-end
 
   def display
     puts @guess.join(" ")
@@ -80,7 +83,26 @@ end
     end
   end
 
+  def save_game
+    File.open('./saved_game.yml', 'w') { |file| file.write(YAML.dump(self)) }
+  end
+
+  def self.load_game
+    YAML.safe_load(File.read('./saved_game.yml'), permitted_classes: [Game])
+  end
+
 end
 
-game = Game.new
-game.play
+def start_game
+  puts "Welcome to the Hangman Game!"
+  puts "Type 'load' to load a saved game or press Enter to start a new game:"
+  choice = gets.chomp.downcase
+  if choice == 'load'
+    game = Game.load_game
+  else
+    game = Game.new
+  end
+  game.play
+end
+
+start_game

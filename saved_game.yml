@@ -1,0 +1,11 @@
+--- !ruby/object:Game
+secret_word: finance
+attempts: 2
+guess:
+- f
+- _
+- "n"
+- _
+- "n"
+- _
+- _
